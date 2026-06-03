@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Test AR H2O</title>
+  <title>Réalité augmentée - H2O</title>
 
+  <!-- A-Frame + AR.js -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
 
@@ -14,7 +15,7 @@
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
-      background: black;
+      background: #000;
     }
 
     #info {
@@ -23,7 +24,7 @@
       left: 10px;
       right: 10px;
       z-index: 999999;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.82);
       color: white;
       padding: 12px;
       border-radius: 10px;
@@ -33,24 +34,26 @@
 
     #buttons {
       position: fixed;
-      top: 85px;
+      top: 90px;
       left: 10px;
       right: 10px;
       z-index: 999999;
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      pointer-events: auto;
     }
 
     button {
-      background: yellow;
-      color: black;
-      border: 2px solid black;
+      background: #ffeb3b;
+      color: #000;
+      border: 2px solid #000;
       border-radius: 8px;
-      padding: 12px;
-      font-size: 15px;
+      padding: 11px 12px;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
 
     #profPanel {
@@ -58,28 +61,62 @@
       position: fixed;
       inset: 0;
       z-index: 1000000;
-      background: white;
-      color: black;
+      background: #fff;
+      color: #000;
       overflow: auto;
       padding: 24px;
       text-align: center;
       box-sizing: border-box;
     }
 
+    #profPanel h1 {
+      margin-top: 0;
+    }
+
     #profPanel img {
       max-width: 320px;
       width: 80%;
+      height: auto;
       border: 1px solid #ccc;
       margin: 12px auto;
       display: block;
     }
 
     .box {
-      border: 2px solid black;
+      border: 2px solid #000;
       border-radius: 12px;
       padding: 18px;
       margin: 20px auto;
-      max-width: 460px;
+      max-width: 480px;
+    }
+
+    .smallText {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    @media print {
+      body {
+        overflow: visible;
+        background: #fff;
+      }
+
+      a-scene,
+      #info,
+      #buttons {
+        display: none !important;
+      }
+
+      #profPanel {
+        display: block !important;
+        position: static;
+      }
+
+      button {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -87,34 +124,50 @@
 <body>
 
   <div id="info">
-    Version test 2026-06-02 — Autorise la caméra puis vise le marqueur Hiro.
+    Version corrigée — Autorise la caméra, puis vise le marqueur Hiro.
   </div>
 
   <div id="buttons">
     <button onclick="openProfessorMode()">Mode professeur</button>
     <button onclick="hideButtons()">Cacher les boutons</button>
+    <button onclick="location.reload()">Recharger</button>
   </div>
 
   <div id="profPanel">
     <h1>Mode professeur</h1>
 
+    <p>
+      1. Les étudiants ouvrent l'adresse HTTPS de cette page.<br>
+      2. Ils autorisent la caméra.<br>
+      3. Ils visent le marqueur Hiro.<br>
+      4. La molécule H₂O apparaît en réalité augmentée.
+    </p>
+
     <div class="box">
-      <h2>QR code de cette activité</h2>
-      <p>À utiliser seulement si l’adresse commence par HTTPS.</p>
-      <img id="qrCode" alt="QR code" />
-      <p id="pageUrl"></p>
+      <h2>QR code de l'activité</h2>
+      <p>À scanner avec le cellulaire des étudiants.</p>
+      <img id="qrCode" alt="QR code de cette page" />
+      <p id="pageUrl" class="smallText"></p>
+      <p class="smallText">
+        Important : pour les cellulaires, l'adresse doit commencer par https://.
+        Une adresse localhost ou http://192.168... n'est pas suffisante pour une classe.
+      </p>
     </div>
 
     <div class="box">
       <h2>Marqueur Hiro</h2>
+      <p>À imprimer ou afficher pour faire apparaître la molécule.</p>
       <img
         src="https://upload.wikimedia.org/wikipedia/commons/4/48/Hiro_marker_ARjs.png"
-        alt="Marqueur Hiro"
+        alt="Marqueur Hiro AR.js"
       />
+      <p class="smallText">
+        Conseil : imprime le marqueur sur papier mat, garde-le bien éclairé et évite les reflets.
+      </p>
     </div>
 
-    <button onclick="window.print()">Imprimer</button>
-    <button onclick="closeProfessorMode()">Retour</button>
+    <button onclick="window.print()">Imprimer cette fiche</button>
+    <button onclick="closeProfessorMode()">Retour à la caméra</button>
   </div>
 
   <a-scene
@@ -134,45 +187,55 @@
       smooth-threshold="5"
     >
 
-      <!-- Objet volontairement énorme pour le test -->
-      <a-entity position="0 0 0" scale="0.15 0.15 0.15">
+      <!-- Molécule H2O corrigée : taille réduite pour écran de cellulaire -->
+      <a-entity id="moleculeH2O" position="0 0 0" scale="0.75 0.75 0.75">
 
-        <!-- Cube bleu très visible -->
-        <a-box
-          position="0 0.5 0"
-          width="0.6"
-          height="0.6"
-          depth="0.6"
-          material="color: blue; shader: flat;"
-        ></a-box>
-
-        <!-- Sphère rouge très visible -->
+        <!-- Oxygène -->
         <a-sphere
-          position="0 1.3 0"
-          radius="0.35"
-          material="color: red; shader: flat;"
+          position="0 0.65 0"
+          radius="0.28"
+          material="color: #ff0000; shader: flat;"
         ></a-sphere>
 
-        <!-- Deux petites sphères blanches -->
+        <!-- Hydrogène gauche -->
         <a-sphere
-          position="-0.7 1.75 0"
-          radius="0.22"
-          material="color: white; shader: flat;"
+          position="-0.55 1.05 0"
+          radius="0.18"
+          material="color: #ffffff; shader: flat;"
         ></a-sphere>
 
+        <!-- Hydrogène droit -->
         <a-sphere
-          position="0.7 1.75 0"
-          radius="0.22"
-          material="color: white; shader: flat;"
+          position="0.55 1.05 0"
+          radius="0.18"
+          material="color: #ffffff; shader: flat;"
         ></a-sphere>
 
-        <!-- Texte -->
+        <!-- Liaison gauche -->
+        <a-cylinder
+          position="-0.28 0.85 0"
+          radius="0.045"
+          height="0.65"
+          rotation="0 0 55"
+          material="color: #dddddd; shader: flat;"
+        ></a-cylinder>
+
+        <!-- Liaison droite -->
+        <a-cylinder
+          position="0.28 0.85 0"
+          radius="0.045"
+          height="0.65"
+          rotation="0 0 -55"
+          material="color: #dddddd; shader: flat;"
+        ></a-cylinder>
+
+        <!-- Étiquette -->
         <a-text
           value="H2O"
-          position="-0.55 2.3 0"
+          position="-0.32 1.45 0"
           rotation="-90 0 0"
-          color="cyan"
-          width="3"
+          color="#00ffff"
+          width="2"
           align="center"
           side="double"
         ></a-text>
@@ -188,13 +251,28 @@
     const info = document.getElementById("info");
     const marker = document.getElementById("hiroMarker");
 
+    function isSecureEnough() {
+      return (
+        window.location.protocol === "https:" ||
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      );
+    }
+
+    if (!isSecureEnough()) {
+      info.textContent =
+        "Attention : cette page n'est pas ouverte en HTTPS. Sur cellulaire, la caméra peut être bloquée. Utilise l'adresse GitHub Pages en https://.";
+      info.style.background = "rgba(160, 0, 0, 0.85)";
+    }
+
     marker.addEventListener("markerFound", function () {
-      info.textContent = "Marqueur détecté. Tu devrais voir un cube bleu et une sphère rouge.";
+      info.textContent = "Marqueur détecté : la molécule H2O est visible.";
       info.style.background = "rgba(0, 120, 0, 0.85)";
     });
 
     marker.addEventListener("markerLost", function () {
-      info.textContent = "Marqueur perdu. Replace le marqueur Hiro dans la caméra.";
+      info.textContent =
+        "Marqueur perdu : garde le marqueur Hiro entier dans la caméra, bien éclairé et sans reflet.";
       info.style.background = "rgba(160, 0, 0, 0.85)";
     });
 
@@ -206,7 +284,6 @@
       const cleanUrl = window.location.href.split("?")[0].split("#")[0];
 
       pageUrl.textContent = cleanUrl;
-
       qr.src =
         "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
         encodeURIComponent(cleanUrl);
@@ -223,7 +300,6 @@
     }
 
     const params = new URLSearchParams(window.location.search);
-
     if (params.get("prof") === "1") {
       window.addEventListener("load", openProfessorMode);
     }
