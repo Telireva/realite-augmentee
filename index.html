@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Test AR H2O</title>
+
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: black;
+    }
+
+    #info {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 999999;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    #buttons {
+      position: fixed;
+      top: 85px;
+      left: 10px;
+      right: 10px;
+      z-index: 999999;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: yellow;
+      color: black;
+      border: 2px solid black;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #profPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000000;
+      background: white;
+      color: black;
+      overflow: auto;
+      padding: 24px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #profPanel img {
+      max-width: 320px;
+      width: 80%;
+      border: 1px solid #ccc;
+      margin: 12px auto;
+      display: block;
+    }
+
+    .box {
+      border: 2px solid black;
+      border-radius: 12px;
+      padding: 18px;
+      margin: 20px auto;
+      max-width: 460px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="info">
+    Version test 2026-06-02 — Autorise la caméra puis vise le marqueur Hiro.
+  </div>
+
+  <div id="buttons">
+    <button onclick="openProfessorMode()">Mode professeur</button>
+    <button onclick="hideButtons()">Cacher les boutons</button>
+  </div>
+
+  <div id="profPanel">
+    <h1>Mode professeur</h1>
+
+    <div class="box">
+      <h2>QR code de cette activité</h2>
+      <p>À utiliser seulement si l’adresse commence par HTTPS.</p>
+      <img id="qrCode" alt="QR code" />
+      <p id="pageUrl"></p>
+    </div>
+
+    <div class="box">
+      <h2>Marqueur Hiro</h2>
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/4/48/Hiro_marker_ARjs.png"
+        alt="Marqueur Hiro"
+      />
+    </div>
+
+    <button onclick="window.print()">Imprimer</button>
+    <button onclick="closeProfessorMode()">Retour</button>
+  </div>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; antialias: true;"
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+  >
+
+    <a-marker
+      id="hiroMarker"
+      preset="hiro"
+      emitevents="true"
+      smooth="true"
+      smooth-count="20"
+      smooth-tolerance="0.005"
+      smooth-threshold="5"
+    >
+
+      <!-- Objet volontairement énorme pour le test -->
+      <a-entity position="0 0 0" scale="2.5 2.5 2.5">
+
+        <!-- Cube bleu très visible -->
+        <a-box
+          position="0 0.5 0"
+          width="0.6"
+          height="0.6"
+          depth="0.6"
+          material="color: blue; shader: flat;"
+        ></a-box>
+
+        <!-- Sphère rouge très visible -->
+        <a-sphere
+          position="0 1.3 0"
+          radius="0.35"
+          material="color: red; shader: flat;"
+        ></a-sphere>
+
+        <!-- Deux petites sphères blanches -->
+        <a-sphere
+          position="-0.7 1.75 0"
+          radius="0.22"
+          material="color: white; shader: flat;"
+        ></a-sphere>
+
+        <a-sphere
+          position="0.7 1.75 0"
+          radius="0.22"
+          material="color: white; shader: flat;"
+        ></a-sphere>
+
+        <!-- Texte -->
+        <a-text
+          value="H2O"
+          position="-0.55 2.3 0"
+          rotation="-90 0 0"
+          color="cyan"
+          width="3"
+          align="center"
+          side="double"
+        ></a-text>
+
+      </a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const info = document.getElementById("info");
+    const marker = document.getElementById("hiroMarker");
+
+    marker.addEventListener("markerFound", function () {
+      info.textContent = "Marqueur détecté. Tu devrais voir un cube bleu et une sphère rouge.";
+      info.style.background = "rgba(0, 120, 0, 0.85)";
+    });
+
+    marker.addEventListener("markerLost", function () {
+      info.textContent = "Marqueur perdu. Replace le marqueur Hiro dans la caméra.";
+      info.style.background = "rgba(160, 0, 0, 0.85)";
+    });
+
+    function openProfessorMode() {
+      const panel = document.getElementById("profPanel");
+      const qr = document.getElementById("qrCode");
+      const pageUrl = document.getElementById("pageUrl");
+
+      const cleanUrl = window.location.href.split("?")[0].split("#")[0];
+
+      pageUrl.textContent = cleanUrl;
+
+      qr.src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+        encodeURIComponent(cleanUrl);
+
+      panel.style.display = "block";
+    }
+
+    function closeProfessorMode() {
+      document.getElementById("profPanel").style.display = "none";
+    }
+
+    function hideButtons() {
+      document.getElementById("buttons").style.display = "none";
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("prof") === "1") {
+      window.addEventListener("load", openProfessorMode);
+    }
+  </script>
+
+</body>
+</html>
